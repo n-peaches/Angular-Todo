@@ -31,7 +31,32 @@ angular.module('RouteControllers', [])
 				});
 			}
 		};
-	}).controller('TodoController', function($scope, $location, TodoAPIService, store) {
+	})
+	.controller('LoginController', function($scope, $location, UserService, store) {
+		var url = "https://morning-castle-91468.herokuapp.com/";
+
+		$scope.submitForm = function() {
+			if ($scope.loginForm.$isValid) {
+				$scope.loginUser.username = $scope.user.username;
+				$scope.loginUser.password = $scope.user.password;
+
+				UserAPIService.callAPI(url + "accounts/api-token-auth", $scope.data).then(function(results) {
+					$scope.token = results.data.token;
+					store.set('username', $scope.loginUser.username);
+					store.set('authToken', $scope.token);
+					$location.path("/todo");
+				}).catch(function(err) {
+					console.log(err);
+				});
+			}
+		};
+	})
+	.controller('LogoutController', function(store) {
+		store.remove('username');
+		store.remove('authToken');
+	})
+
+	.controller('TodoController', function($scope, $location, TodoAPIService, store) {
 		var URL = "https://morning-castle-91468.herokuapp.com/";
 
 		$scope.authToken = store.get('authToken');
@@ -74,21 +99,22 @@ angular.module('RouteControllers', [])
 	var id = $routeParams.id;
 	var URL = "https://morning-castle-91468.herokuapp.com/";
 
-	TodoAPIService.getTodos(URL + "todo/" + id, $scope.username, store.get('authToken')).then(function(results) {
-		$scope.todo = results.data;
-	}).catch(function(err) {
-		console.log(err);
-	});
-
 	$scope.submitForm = function() {
 		if ($scope.todoForm.$valid) {
+			$scope.todo.title = $scope.todo.title;
+			$scope.todo.description = $scope.todo.description;
+			$scope.todo.status = $scope.todo.status;
 			$scope.todo.username = $scope.username;
 
-			TodoAPIService.editTodo(URL + "todo/" + id, $scope.todo, store.get('authToken')).then(function(results) {
-				$location.path("/todo");
+			console.log($scope.todo.username)
+
+			console.log(url + "todo/" + id);
+
+			TodoAPIService.editTodo(url + "todo/" + id, $scope.todo, $scope.authToken).then(function(results) {
+				console.log(results)
 			}).catch(function(err) {
-				console.log(err);
-			});
+				console.log(err)
+			})
 		}
 	}
 });
